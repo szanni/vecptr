@@ -11,11 +11,11 @@ CFLAGS += -O3
 CFLAGS += `$(PKG_CONFIG) --cflags cmocka`
 LDFLAGS += `$(PKG_CONFIG) --libs cmocka`
 
-PACKAGE = vector
+PACKAGE = vecptr
 VERSION = 0.0.0
 
 TESTOBJS = test.c89 test.c99 test.c11
-DIST = Makefile vector.h vector.3 unused.h test.c LICENSE
+DIST = Makefile vecptr.h vecptr.3 unused.h test.c LICENSE
 
 all:
 	@echo 'As this is a header only library there is nothing to be done.'
@@ -26,18 +26,18 @@ check: clean $(TESTOBJS)
 	./test.c99
 	./test.c11
 
-test.c89: test.c vector.h unused.h
+test.c89: test.c vecptr.h unused.h
 	$(CC) -std=c89 test.c -o $@ $(CFLAGS) $(LDFLAGS)
 
-test.c99: test.c vector.h unused.h
+test.c99: test.c vecptr.h unused.h
 	$(CC) -std=c99 test.c -o $@ $(CFLAGS) $(LDFLAGS)
 
-test.c11: test.c vector.h unused.h
+test.c11: test.c vecptr.h unused.h
 	$(CC) -std=c11 test.c -o $@ $(CFLAGS) $(LDFLAGS)
 
-install: vector.h vector.3
-	$(INSTALL) -D -m644 vector.h "$(DESTDIR)$(PREFIX)/include/vector.h"
-	$(INSTALL) -D -m644 vector.3 "$(DESTDIR)$(PREFIX)/share/man/man3/vector.3"
+install: vecptr.h vecptr.3
+	$(INSTALL) -D -m644 vecptr.h "$(DESTDIR)$(PREFIX)/include/vecptr.h"
+	$(INSTALL) -D -m644 vecptr.3 "$(DESTDIR)$(PREFIX)/share/man/man3/vecptr.3"
 
 dist: $(DIST)
 	mkdir -p $(PACKAGE)-$(VERSION)

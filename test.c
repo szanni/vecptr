@@ -29,154 +29,166 @@
 /* Wrap realloc to simulate realloc failure conditions in tests */
 void * _wrap_realloc(void *ptr, size_t size);
 #define realloc(a,b) _wrap_realloc(a,b)
-#include "vector.h"
+#include "vecptr.h"
 #undef realloc
 
 #include "unused.h"
 
-VECTOR_TYPEDEF(int, int);
-VECTOR_TYPEDEF(char*, string);
+VECPTR_TYPEDEF(int, int);
+VECPTR_TYPEDEF(char*, string);
 char* strings[] = {"ab", "cd", "ef", NULL};
 
 void *
 _wrap_realloc (void * ptr, size_t size)
 {
-	if (mock_type(int))
-		return NULL;
+	static size_t prev_size;
+	void *new;
 
-	return realloc(ptr, size);
+	switch (mock_type(int)) {
+		case 1:
+			/* Emulate realloc failure */
+			return NULL;
+		case 2:
+			/* Force a different ptr address */
+			if (ptr == NULL)
+				prev_size = 0;
+
+			new = realloc(NULL, size);
+			if (new != NULL) {
+				memcpy(new, ptr, prev_size);
+				free(ptr);
+				prev_size = size;
+			}
+			return new;
+		case 0:
+		default:
+			prev_size = size;
+			return realloc(ptr, size);
+	}
 }
 
 void
 test_INIT_EMPTY (void ** UNUSED(state))
 {
-	VECTOR(int) v;
-	VECTOR_INIT_EMPTY(v);
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_SIZE(v), 0);
-	assert_int_equal(VECTOR_CAPACITY(v), VECTOR_DEFAULT_CAPACITY);
+	assert_int_equal(VECPTR_SIZE(v), 0);
+	assert_int_equal(VECPTR_CAPACITY(v), VECPTR_DEFAULT_CAPACITY);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
 
-	assert_int_equal(VECTOR_SIZE(v), 1);
-	assert_int_equal(VECTOR_CAPACITY(v), VECTOR_DEFAULT_CAPACITY);
+	assert_int_equal(VECPTR_SIZE(v), 1);
+	assert_int_equal(VECPTR_CAPACITY(v), VECPTR_DEFAULT_CAPACITY);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
-test_INIT_STATIC_EMPTY (void ** UNUSED(state))
+test_INIT_EMPTY_CAPACITY (void ** UNUSED(state))
 {
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 7);
 
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_SIZE(v), 0);
-	assert_int_equal(VECTOR_CAPACITY(v), VECTOR_DEFAULT_CAPACITY);
+	assert_int_equal(VECPTR_SIZE(v), 0);
+	assert_int_equal(VECPTR_CAPACITY(v), 7);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
 
-	assert_int_equal(VECTOR_SIZE(v), 1);
-	assert_int_equal(VECTOR_CAPACITY(v), VECTOR_DEFAULT_CAPACITY);
+	assert_int_equal(VECPTR_SIZE(v), 1);
+	assert_int_equal(VECPTR_CAPACITY(v), 7);
 
-	VECTOR_FREE(v);
-}
-
-void
-test_INIT_CAPACITY (void ** UNUSED(state))
-{
-	VECTOR(int) v;
-	VECTOR_INIT_CAPACITY(v, 7);
-
-	will_return(_wrap_realloc, 0);
-
-	assert_int_equal(VECTOR_SIZE(v), 0);
-	assert_int_equal(VECTOR_CAPACITY(v), 7);
-
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-
-	assert_int_equal(VECTOR_SIZE(v), 1);
-	assert_int_equal(VECTOR_CAPACITY(v), 7);
-
-	VECTOR_FREE(v);
-}
-
-void
-test_INIT_STATIC_CAPACITY (void ** UNUSED(state))
-{
-	VECTOR(int) v = VECTOR_INIT_STATIC_CAPACITY(7);
-
-	will_return(_wrap_realloc, 0);
-
-	assert_int_equal(VECTOR_SIZE(v), 0);
-	assert_int_equal(VECTOR_CAPACITY(v), 7);
-
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-
-	assert_int_equal(VECTOR_SIZE(v), 1);
-	assert_int_equal(VECTOR_CAPACITY(v), 7);
-
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 _test_INIT_DATA(int *data, size_t size)
 {
-	VECTOR_TYPE(int) v;
-	VECTOR_INIT_DATA(v, data, size);
+	VECPTR_TYPE(int) v;
+	VECPTR_INIT_DATA(v, &data, &size);
 
-	assert_int_equal(VECTOR_AT(v, 0), 10);
-	assert_int_equal(VECTOR_AT(v, 1), 20);
-	assert_int_equal(VECTOR_AT(v, 2), 30);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
+	assert_int_equal(VECPTR_AT(v, 2), 30);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_INIT_DATA (void ** UNUSED(state))
 {
-	VECTOR_TYPE(int) v = VECTOR_INIT_STATIC_CAPACITY(3);
+	int *data;
+	size_t ndata;
+	VECPTR_TYPE(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-	assert_int_equal(VECTOR_APPEND(v, 20), 0);
-	assert_int_equal(VECTOR_APPEND(v, 30), 0);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+	assert_int_equal(VECPTR_APPEND(v, 30), 0);
 
-	_test_INIT_DATA(VECTOR_DATA(v), VECTOR_SIZE(v));
+	_test_INIT_DATA(VECPTR_DATA(v), VECPTR_SIZE(v));
+}
+
+void
+test_data_passable_after_modification (void ** UNUSED(state))
+{
+	int *data;
+	size_t ndata;
+	VECPTR_TYPE(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
+
+	will_return(_wrap_realloc, 0);
+
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+	assert_int_equal(VECPTR_APPEND(v, 30), 0);
+
+	_test_INIT_DATA(data, ndata);
 }
 
 void
 test_new (void ** UNUSED(state))
 {
-	/* Ensure VECTOR_NEW() is not affected by uninitialized structures */
-	VECTOR(int) v = {1, VECTOR_DEFAULT_CAPACITY + 10, (void*) 0xDEADBEEF};
+	/* Ensure VECPTR_NEW() is not affected by uninitialized structures */
+	int *data = (int*)0x5EEDC0DE;
+	size_t ndata = 1;
+	VECPTR(int) v;
 
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_NEW(v), 0);
-	assert_int_equal(VECTOR_SIZE(v), 0);
-	assert_int_equal(VECTOR_CAPACITY(v), VECTOR_DEFAULT_CAPACITY);
+	assert_int_equal(VECPTR_NEW(v, &data, &ndata), 0);
+	assert_int_equal(VECPTR_SIZE(v), 0);
+	assert_int_equal(VECPTR_CAPACITY(v), VECPTR_DEFAULT_CAPACITY);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_new_capacity (void ** UNUSED(state))
 {
-	/* Ensure VECTOR_NEW_CAPACITY() is not affected by uninitialized
-	   structures */
-	VECTOR(int) v = {1, VECTOR_DEFAULT_CAPACITY + 10, (void*) 0xDEADBEEF};
+	/* Ensure VECPTR_NEW_CAPACITY() is not affected by uninitialized structures */
+	int *data = (int*)0x5EEDC0DE;
+	size_t ndata = 1;
+
+	VECPTR(int) v;
 
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_NEW_CAPACITY(v, 7), 0);
-	assert_int_equal(VECTOR_SIZE(v), 0);
-	assert_int_equal(VECTOR_CAPACITY(v), 7);
+	assert_int_equal(VECPTR_NEW_CAPACITY(v, &data, &ndata, 7), 0);
+	assert_int_equal(VECPTR_SIZE(v), 0);
+	assert_int_equal(VECPTR_CAPACITY(v), 7);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
@@ -184,19 +196,57 @@ test_append_grow (void ** UNUSED(state))
 {
 	size_t i;
 	size_t capacity;
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return_always(_wrap_realloc, 0);
 
-	capacity = VECTOR_CAPACITY(v) * 2;
+	capacity = VECPTR_CAPACITY(v) * 2;
 
 	for (i = 0; i < capacity; ++i)
-		assert_int_equal(VECTOR_APPEND(v, i), 0);
+		assert_int_equal(VECPTR_APPEND(v, i), 0);
 
 	for (i = 0; i < capacity; ++i)
-		assert_int_equal(VECTOR_AT(v, i), i);
+		assert_int_equal(VECPTR_AT(v, i), i);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
+}
+
+void
+test_append_grow_change_data_ptr (void ** UNUSED(state))
+{
+	size_t i;
+	size_t capacity;
+	int *data;
+	int *old_data_ptr;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
+
+	will_return_always(_wrap_realloc, 2);
+
+	capacity = VECPTR_CAPACITY(v);
+
+	for (i = 0; i < capacity; ++i)
+		assert_int_equal(VECPTR_APPEND(v, i), 0);
+
+	old_data_ptr = data;
+	capacity = VECPTR_CAPACITY(v) * 2;
+
+	for (i = VECPTR_CAPACITY(v); i < capacity; ++i)
+		assert_int_equal(VECPTR_APPEND(v, i), 0);
+
+	assert_ptr_not_equal(data, old_data_ptr);
+
+	for (i = 0; i < capacity; ++i)
+		assert_int_equal(VECPTR_AT(v, i), i);
+
+	for (i = 0; i < ndata; ++i)
+		assert_int_equal(data[i], i);
+
+	VECPTR_FREE(v);
 }
 
 void
@@ -204,204 +254,201 @@ test_prepend_grow (void ** UNUSED(state))
 {
 	size_t i;
 	size_t capacity;
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return_always(_wrap_realloc, 0);
 
-	capacity = VECTOR_CAPACITY(v) * 2;
+	capacity = VECPTR_CAPACITY(v) * 2;
 
 	for (i = 0; i < capacity; ++i)
-		assert_int_equal(VECTOR_PREPEND(v, i), 0);
+		assert_int_equal(VECPTR_PREPEND(v, i), 0);
 
 	for (i = 0; i < capacity; ++i)
-		assert_int_equal(VECTOR_AT(v, i), capacity-1-i);
+		assert_int_equal(VECPTR_AT(v, i), capacity-1-i);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_erase (void ** UNUSED(state))
 {
 	size_t i;
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return_always(_wrap_realloc, 0);
 
 	for (i = 0; i < 10; ++i)
-		assert_int_equal(VECTOR_APPEND(v, i), 0);
+		assert_int_equal(VECPTR_APPEND(v, i), 0);
 
-	VECTOR_ERASE(v, 5);
-	VECTOR_ERASE(v, 0);
-	VECTOR_ERASE(v, 7);
-	VECTOR_ERASE(v, 1);
-	VECTOR_ERASE(v, 2);
-	VECTOR_ERASE(v, 2);
-	VECTOR_ERASE(v, 3);
+	VECPTR_ERASE(v, 5);
+	VECPTR_ERASE(v, 0);
+	VECPTR_ERASE(v, 7);
+	VECPTR_ERASE(v, 1);
+	VECPTR_ERASE(v, 2);
+	VECPTR_ERASE(v, 2);
+	VECPTR_ERASE(v, 3);
 
-	assert_int_equal(VECTOR_AT(v, 0), 1);
-	assert_int_equal(VECTOR_AT(v, 1), 3);
-	assert_int_equal(VECTOR_AT(v, 2), 7);
+	assert_int_equal(VECPTR_AT(v, 0), 1);
+	assert_int_equal(VECPTR_AT(v, 1), 3);
+	assert_int_equal(VECPTR_AT(v, 2), 7);
 
-	assert_int_equal(VECTOR_SIZE(v), 3);
+	assert_int_equal(VECPTR_SIZE(v), 3);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_front (void ** UNUSED(state))
 {
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return_always(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-	assert_int_equal(VECTOR_FRONT(v), 10);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_FRONT(v), 10);
 
-	assert_int_equal(VECTOR_APPEND(v, 20), 0);
-	assert_int_equal(VECTOR_FRONT(v), 10);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+	assert_int_equal(VECPTR_FRONT(v), 10);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_back (void ** UNUSED(state))
 {
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return_always(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-	assert_int_equal(VECTOR_BACK(v), 10);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_BACK(v), 10);
 
-	assert_int_equal(VECTOR_APPEND(v, 20), 0);
-	assert_int_equal(VECTOR_BACK(v), 20);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+	assert_int_equal(VECPTR_BACK(v), 20);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_new_fail (void ** UNUSED(state))
 {
-	VECTOR(int) v;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
 
 	will_return(_wrap_realloc, 1);
 
-	assert_int_equal(VECTOR_NEW(v), 1);
+	assert_int_equal(VECPTR_NEW(v, &data, &ndata), 1);
 }
 
 void
 test_new_capacity_fail (void ** UNUSED(state))
 {
-	VECTOR(int) v;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
 
 	will_return(_wrap_realloc, 1);
 
-	assert_int_equal(VECTOR_NEW_CAPACITY(v, 5), 1);
+	assert_int_equal(VECPTR_NEW_CAPACITY(v, &data, &ndata, 5), 1);
 }
 
 void
 test_append_grow_fail (void ** UNUSED(state))
 {
 	unsigned i;
-	VECTOR(int) v;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
 
 	will_return(_wrap_realloc, 0);
 	will_return(_wrap_realloc, 1);
 
-	assert_int_equal(VECTOR_NEW(v), 0);
-	for (i = 0; i < VECTOR_CAPACITY(v); ++i)
-		assert_int_equal(VECTOR_APPEND(v, i), 0);
-	assert_int_equal(VECTOR_APPEND(v, i), 1);
+	assert_int_equal(VECPTR_NEW(v, &data, &ndata), 0);
+	for (i = 0; i < VECPTR_CAPACITY(v); ++i)
+		assert_int_equal(VECPTR_APPEND(v, i), 0);
+	assert_int_equal(VECPTR_APPEND(v, i), 1);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_prepend_grow_fail (void ** UNUSED(state))
 {
 	unsigned i;
-	VECTOR(int) v;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
 
 	will_return(_wrap_realloc, 0);
 	will_return(_wrap_realloc, 1);
 
-	assert_int_equal(VECTOR_NEW(v), 0);
-	for (i = 0; i < VECTOR_CAPACITY(v); ++i)
-		assert_int_equal(VECTOR_PREPEND(v, i), 0);
-	assert_int_equal(VECTOR_APPEND(v, i), 1);
+	assert_int_equal(VECPTR_NEW(v, &data, &ndata), 0);
+	for (i = 0; i < VECPTR_CAPACITY(v); ++i)
+		assert_int_equal(VECPTR_PREPEND(v, i), 0);
+	assert_int_equal(VECPTR_APPEND(v, i), 1);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_shrink_to_fit (void ** UNUSED(state))
 {
-	VECTOR_TYPE(int) v = VECTOR_INIT_STATIC_CAPACITY(5);
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+
+	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 5);
 
 	will_return(_wrap_realloc, 0);
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-	assert_int_equal(VECTOR_APPEND(v, 20), 0);
-	assert_int_equal(VECTOR_APPEND(v, 30), 0);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+	assert_int_equal(VECPTR_APPEND(v, 30), 0);
 
-	assert_int_equal(VECTOR_CAPACITY(v), 5);
+	assert_int_equal(VECPTR_CAPACITY(v), 5);
 
-	VECTOR_SHRINK_TO_FIT(v);
+	VECPTR_SHRINK_TO_FIT(v);
 
-	assert_int_equal(VECTOR_CAPACITY(v), 3);
+	assert_int_equal(VECPTR_CAPACITY(v), 3);
 
 	will_return(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_APPEND(v, 40), 0);
+	assert_int_equal(VECPTR_APPEND(v, 40), 0);
 
-	VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 void
 test_basic_example (void ** UNUSED(state))
 {
-	VECTOR(int) v = VECTOR_INIT_STATIC_EMPTY;
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
 
 	will_return_always(_wrap_realloc, 0);
 
-	assert_int_equal(VECTOR_APPEND(v, 10), 0);
-	assert_int_equal(VECTOR_APPEND(v, 20), 0);
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
 
-	assert_int_equal(VECTOR_AT(v, 0), 10);
-	assert_int_equal(VECTOR_AT(v, 1), 20);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
 
-	VECTOR_FREE(v);
-}
-void
-print_vector (VECTOR_TYPE(string) v)
-{
-        char **p;
-        char **si = strings;
-
-        VECTOR_FOREACH(v, p)
-                assert_string_equal(*p, *si++);
-}
-
-void
-test_advanced_example (void ** UNUSED(state))
-{
-        char *s;
-        char **si = strings;
-        VECTOR_TYPE(string) v;
-
-        will_return_always(_wrap_realloc, 0);
-
-        assert_int_equal(VECTOR_NEW_CAPACITY(v, 10), 0);
-
-        while ((s = *si++) != NULL)
-                assert_int_equal(VECTOR_APPEND(v, s), 0);
-
-        assert_int_equal(VECTOR_SIZE(v), 3);
-
-        print_vector(v);
-
-        VECTOR_FREE(v);
+	VECPTR_FREE(v);
 }
 
 int
@@ -409,13 +456,13 @@ main (void)
 {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test(test_INIT_EMPTY),
-		cmocka_unit_test(test_INIT_STATIC_EMPTY),
-		cmocka_unit_test(test_INIT_CAPACITY),
-		cmocka_unit_test(test_INIT_STATIC_CAPACITY),
+		cmocka_unit_test(test_INIT_EMPTY_CAPACITY),
 		cmocka_unit_test(test_INIT_DATA),
+		cmocka_unit_test(test_data_passable_after_modification),
 		cmocka_unit_test(test_new),
 		cmocka_unit_test(test_new_capacity),
 		cmocka_unit_test(test_append_grow),
+		cmocka_unit_test(test_append_grow_change_data_ptr),
 		cmocka_unit_test(test_prepend_grow),
 		cmocka_unit_test(test_erase),
 		cmocka_unit_test(test_front),
@@ -426,7 +473,6 @@ main (void)
 		cmocka_unit_test(test_prepend_grow_fail),
 		cmocka_unit_test(test_shrink_to_fit),
 		cmocka_unit_test(test_basic_example),
-		cmocka_unit_test(test_advanced_example),
 	};
 	return cmocka_run_group_tests(tests, NULL, NULL);
 }
