@@ -170,7 +170,7 @@ _vecptr_shrink_to_fit(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
 {
 	if (*(v->size) == 0 && v->capacity != 0) {
 		v->capacity = 0;
-		free(*(v->data));
+		VECPTR_FREE(*v);
 		*(v->data) = NULL;
 		return;
 	}
