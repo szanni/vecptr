@@ -318,7 +318,33 @@ test_erase_append(void ** UNUSED(state))
 
 	VECPTR_ERASE(v, 0);
 
+	assert_int_equal(VECPTR_SIZE(v), 0);
+
 	assert_int_equal(VECPTR_APPEND(v, 1), 0);
+
+	assert_int_equal(VECPTR_AT(v, 0), 1);
+	assert_int_equal(VECPTR_SIZE(v), 1);
+
+	VECPTR_FREE(v);
+}
+
+void
+test_erase_prepend(void ** UNUSED(state))
+{
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+	VECPTR_INIT_EMPTY(v, &data, &ndata);
+
+	will_return_always(_wrap_realloc, 0);
+
+	assert_int_equal(VECPTR_APPEND(v, 0), 0);
+
+	VECPTR_ERASE(v, 0);
+
+	assert_int_equal(VECPTR_SIZE(v), 0);
+
+	assert_int_equal(VECPTR_PREPEND(v, 1), 0);
 
 	assert_int_equal(VECPTR_AT(v, 0), 1);
 	assert_int_equal(VECPTR_SIZE(v), 1);
@@ -513,6 +539,7 @@ main(void)
 		cmocka_unit_test(test_prepend_grow),
 		cmocka_unit_test(test_erase),
 		cmocka_unit_test(test_erase_append),
+		cmocka_unit_test(test_erase_prepend),
 		cmocka_unit_test(test_erase_init_data_empty_append),
 		cmocka_unit_test(test_front),
 		cmocka_unit_test(test_back),
