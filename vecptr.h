@@ -104,14 +104,16 @@ _vecptr_grow_if_needed(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
 		if (*(v->size) < v->capacity)
 			return 0;
 
-		if (v->capacity == 0)
-			new_capacity = VECPTR_DEFAULT_CAPACITY;
-		else
-			new_capacity = (size_t)(v->capacity * VECPTR_GROWTH_FACTOR);
+		new_capacity = (size_t)(v->capacity * VECPTR_GROWTH_FACTOR);
 	}
 	else {
 		new_capacity = v->capacity;
 	}
+
+	/* Ensure to always grow the vecptr. Needed for capacity == 0
+	 * or capacity == 1 and a growth factor < 2. */
+	if (new_capacity <= *(v->size))
+		new_capacity = *(v->size) + VECPTR_DEFAULT_CAPACITY;
 
 	return _vecptr_resize(v, sizeof_type, new_capacity);
 }

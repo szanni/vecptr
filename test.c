@@ -485,22 +485,107 @@ test_shrink_to_fit(void ** UNUSED(state))
 
 	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 5);
 
-	will_return(_wrap_realloc, 0);
-	will_return(_wrap_realloc, 0);
+	will_return_always(_wrap_realloc, 0);
 
 	assert_int_equal(VECPTR_APPEND(v, 10), 0);
 	assert_int_equal(VECPTR_APPEND(v, 20), 0);
-	assert_int_equal(VECPTR_APPEND(v, 30), 0);
 
 	assert_int_equal(VECPTR_CAPACITY(v), 5);
 
 	VECPTR_SHRINK_TO_FIT(v);
 
-	assert_int_equal(VECPTR_CAPACITY(v), 3);
+	assert_int_equal(VECPTR_SIZE(v), 2);
+	assert_int_equal(VECPTR_CAPACITY(v), 2);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
 
-	will_return(_wrap_realloc, 0);
+	assert_int_equal(VECPTR_APPEND(v, 30), 0);
 
-	assert_int_equal(VECPTR_APPEND(v, 40), 0);
+	assert_int_equal(VECPTR_SIZE(v), 3);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
+	assert_int_equal(VECPTR_AT(v, 2), 30);
+
+	VECPTR_FREE(v);
+}
+
+void
+test_shrink_to_fit_empty(void ** UNUSED(state))
+{
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+
+	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 5);
+
+	will_return_always(_wrap_realloc, 0);
+
+	VECPTR_SHRINK_TO_FIT(v);
+
+	assert_int_equal(VECPTR_SIZE(v), 0);
+
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+
+	assert_int_equal(VECPTR_SIZE(v), 2);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
+
+	VECPTR_FREE(v);
+}
+
+void
+test_shrink_to_fit_empty_twice(void ** UNUSED(state))
+{
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+
+	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 5);
+
+	will_return_always(_wrap_realloc, 0);
+
+	VECPTR_SHRINK_TO_FIT(v);
+	VECPTR_SHRINK_TO_FIT(v);
+
+	assert_int_equal(VECPTR_SIZE(v), 0);
+
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+
+	assert_int_equal(VECPTR_SIZE(v), 2);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
+
+	VECPTR_FREE(v);
+}
+
+void
+test_shrink_to_fit_one(void ** UNUSED(state))
+{
+	int *data;
+	size_t ndata;
+	VECPTR(int) v;
+
+	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 5);
+
+	will_return_always(_wrap_realloc, 0);
+
+	assert_int_equal(VECPTR_APPEND(v, 10), 0);
+
+	VECPTR_SHRINK_TO_FIT(v);
+
+	assert_int_equal(VECPTR_SIZE(v), 1);
+	assert_int_equal(VECPTR_CAPACITY(v), 1);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+
+	assert_int_equal(VECPTR_APPEND(v, 20), 0);
+	/*
+
+	assert_int_equal(VECPTR_SIZE(v), 2);
+	assert_int_equal(VECPTR_AT(v, 0), 10);
+	assert_int_equal(VECPTR_AT(v, 1), 20);
+	*/
 
 	VECPTR_FREE(v);
 }
@@ -548,6 +633,9 @@ main(void)
 		cmocka_unit_test(test_append_grow_fail),
 		cmocka_unit_test(test_prepend_grow_fail),
 		cmocka_unit_test(test_shrink_to_fit),
+		cmocka_unit_test(test_shrink_to_fit_empty),
+		cmocka_unit_test(test_shrink_to_fit_empty_twice),
+		cmocka_unit_test(test_shrink_to_fit_one),
 		cmocka_unit_test(test_basic_example),
 	};
 	return cmocka_run_group_tests(tests, NULL, NULL);
