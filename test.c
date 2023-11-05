@@ -55,7 +55,8 @@ _wrap_realloc (void * ptr, size_t size)
 
 			new = realloc(NULL, size);
 			if (new != NULL) {
-				memcpy(new, ptr, prev_size);
+				if (ptr != NULL)
+					memcpy(new, ptr, prev_size);
 				free(ptr);
 				prev_size = size;
 			}
