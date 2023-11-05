@@ -39,7 +39,7 @@ VECPTR_TYPEDEF(char*, string);
 char* strings[] = {"ab", "cd", "ef", NULL};
 
 void *
-_wrap_realloc (void * ptr, size_t size)
+_wrap_realloc(void * ptr, size_t size)
 {
 	static size_t prev_size;
 	void *new;
@@ -69,7 +69,7 @@ _wrap_realloc (void * ptr, size_t size)
 }
 
 void
-test_INIT_EMPTY (void ** UNUSED(state))
+test_INIT_EMPTY(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -90,7 +90,7 @@ test_INIT_EMPTY (void ** UNUSED(state))
 }
 
 void
-test_INIT_EMPTY_CAPACITY (void ** UNUSED(state))
+test_INIT_EMPTY_CAPACITY(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -124,7 +124,7 @@ _test_INIT_DATA(int *data, size_t size)
 }
 
 void
-test_INIT_DATA (void ** UNUSED(state))
+test_INIT_DATA(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -141,7 +141,7 @@ test_INIT_DATA (void ** UNUSED(state))
 }
 
 void
-test_data_passable_after_modification (void ** UNUSED(state))
+test_data_passable_after_modification(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -158,7 +158,7 @@ test_data_passable_after_modification (void ** UNUSED(state))
 }
 
 void
-test_new (void ** UNUSED(state))
+test_new(void ** UNUSED(state))
 {
 	/* Ensure VECPTR_NEW() is not affected by uninitialized structures */
 	int *data = (int*)0x5EEDC0DE;
@@ -175,7 +175,7 @@ test_new (void ** UNUSED(state))
 }
 
 void
-test_new_capacity (void ** UNUSED(state))
+test_new_capacity(void ** UNUSED(state))
 {
 	/* Ensure VECPTR_NEW_CAPACITY() is not affected by uninitialized structures */
 	int *data = (int*)0x5EEDC0DE;
@@ -193,7 +193,7 @@ test_new_capacity (void ** UNUSED(state))
 }
 
 void
-test_append_grow (void ** UNUSED(state))
+test_append_grow(void ** UNUSED(state))
 {
 	size_t i;
 	size_t capacity;
@@ -216,7 +216,7 @@ test_append_grow (void ** UNUSED(state))
 }
 
 void
-test_append_grow_change_data_ptr (void ** UNUSED(state))
+test_append_grow_change_data_ptr(void ** UNUSED(state))
 {
 	size_t i;
 	size_t capacity;
@@ -251,7 +251,7 @@ test_append_grow_change_data_ptr (void ** UNUSED(state))
 }
 
 void
-test_prepend_grow (void ** UNUSED(state))
+test_prepend_grow(void ** UNUSED(state))
 {
 	size_t i;
 	size_t capacity;
@@ -274,7 +274,7 @@ test_prepend_grow (void ** UNUSED(state))
 }
 
 void
-test_erase (void ** UNUSED(state))
+test_erase(void ** UNUSED(state))
 {
 	size_t i;
 	int *data;
@@ -305,7 +305,7 @@ test_erase (void ** UNUSED(state))
 }
 
 void
-test_erase_append (void ** UNUSED(state))
+test_erase_append(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -327,7 +327,7 @@ test_erase_append (void ** UNUSED(state))
 }
 
 void
-test_erase_init_data_empty_append (void ** UNUSED(state))
+test_erase_init_data_empty_append(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -351,7 +351,7 @@ test_erase_init_data_empty_append (void ** UNUSED(state))
 }
 
 void
-test_front (void ** UNUSED(state))
+test_front(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -370,7 +370,7 @@ test_front (void ** UNUSED(state))
 }
 
 void
-test_back (void ** UNUSED(state))
+test_back(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -389,7 +389,7 @@ test_back (void ** UNUSED(state))
 }
 
 void
-test_new_fail (void ** UNUSED(state))
+test_new_fail(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -401,7 +401,7 @@ test_new_fail (void ** UNUSED(state))
 }
 
 void
-test_new_capacity_fail (void ** UNUSED(state))
+test_new_capacity_fail(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -413,7 +413,7 @@ test_new_capacity_fail (void ** UNUSED(state))
 }
 
 void
-test_append_grow_fail (void ** UNUSED(state))
+test_append_grow_fail(void ** UNUSED(state))
 {
 	unsigned i;
 	int *data;
@@ -432,7 +432,7 @@ test_append_grow_fail (void ** UNUSED(state))
 }
 
 void
-test_prepend_grow_fail (void ** UNUSED(state))
+test_prepend_grow_fail(void ** UNUSED(state))
 {
 	unsigned i;
 	int *data;
@@ -451,7 +451,7 @@ test_prepend_grow_fail (void ** UNUSED(state))
 }
 
 void
-test_shrink_to_fit (void ** UNUSED(state))
+test_shrink_to_fit(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -480,7 +480,7 @@ test_shrink_to_fit (void ** UNUSED(state))
 }
 
 void
-test_basic_example (void ** UNUSED(state))
+test_basic_example(void ** UNUSED(state))
 {
 	int *data;
 	size_t ndata;
@@ -499,7 +499,7 @@ test_basic_example (void ** UNUSED(state))
 }
 
 int
-main (void)
+main(void)
 {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test(test_INIT_EMPTY),

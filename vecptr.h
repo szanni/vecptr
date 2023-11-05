@@ -107,7 +107,7 @@ _vecptr_grow_if_needed(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
 		if (v->capacity == 0)
 			new_capacity = VECPTR_DEFAULT_CAPACITY;
 		else
-			new_capacity = (size_t) (v->capacity * VECPTR_GROWTH_FACTOR);
+			new_capacity = (size_t)(v->capacity * VECPTR_GROWTH_FACTOR);
 	}
 	else {
 		new_capacity = v->capacity;
@@ -124,7 +124,7 @@ static int
 _vecptr_memmove(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx, size_t srcidx)
 {
 	memmove((char*)(*(v->data)) + sizeof_type * destidx,
-	        (char*)(*(v->data)) + sizeof_type * srcidx,
+		(char*)(*(v->data)) + sizeof_type * srcidx,
 		(*(v->size) - srcidx) * sizeof_type);
 	return 0;
 }
