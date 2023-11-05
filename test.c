@@ -580,12 +580,10 @@ test_shrink_to_fit_one(void ** UNUSED(state))
 	assert_int_equal(VECPTR_AT(v, 0), 10);
 
 	assert_int_equal(VECPTR_APPEND(v, 20), 0);
-	/*
 
 	assert_int_equal(VECPTR_SIZE(v), 2);
 	assert_int_equal(VECPTR_AT(v, 0), 10);
 	assert_int_equal(VECPTR_AT(v, 1), 20);
-	*/
 
 	VECPTR_FREE(v);
 }
