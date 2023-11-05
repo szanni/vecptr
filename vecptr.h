@@ -119,16 +119,15 @@ _vecptr_grow_if_needed(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
 }
 
 #if __STDC_VERSION__ >= 199901L
-static inline int
+static inline void
 #else
-static int
+static void
 #endif
 _vecptr_memmove(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx, size_t srcidx)
 {
 	memmove((char*)(*(v->data)) + sizeof_type * destidx,
 		(char*)(*(v->data)) + sizeof_type * srcidx,
 		(*(v->size) - srcidx) * sizeof_type);
-	return 0;
 }
 
 #if __STDC_VERSION__ >= 199901L
