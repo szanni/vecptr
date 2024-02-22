@@ -45,7 +45,7 @@ struct {			\
 
 #define VECPTR_PREPEND(v, e) ((!_vecptr_prepend(_vecptr(v))) ? (VECPTR_AT((v), 0) = e, (VECPTR_SIZE(v))++, 0) : 1)
 
-#define VECPTR_ERASE(v, i) (_vecptr_memmove(_vecptr(v), (i), (i)+1), VECPTR_SIZE(v)--)
+#define VECPTR_ERASE(v, i) _vecptr_erase(_vecptr(v), (i))
 
 #define VECPTR_AT(v, i) (VECPTR_DATA(v)[i])
 
@@ -128,6 +128,19 @@ _vecptr_memmove(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx
 	memmove((char*)(*(v->data)) + sizeof_type * destidx,
 		(char*)(*(v->data)) + sizeof_type * srcidx,
 		(*(v->size) - srcidx) * sizeof_type);
+}
+
+#if __STDC_VERSION__ >= 199901L
+static inline void
+#else
+static void
+#endif
+_vecptr_erase(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx)
+{
+	size_t srcidx = destidx + 1;
+
+	_vecptr_memmove(v, sizeof_type, destidx, srcidx);
+	--(*v->size);
 }
 
 #if __STDC_VERSION__ >= 199901L
