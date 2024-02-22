@@ -116,6 +116,9 @@ _test_INIT_DATA(int *data, size_t size)
 	VECPTR_TYPE(int) v;
 	VECPTR_INIT_DATA(v, &data, &size);
 
+	assert_int_equal(VECPTR_SIZE(v), size);
+	assert_int_equal(VECPTR_CAPACITY(v), size);
+
 	assert_int_equal(VECPTR_AT(v, 0), 10);
 	assert_int_equal(VECPTR_AT(v, 1), 20);
 	assert_int_equal(VECPTR_AT(v, 2), 30);
