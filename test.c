@@ -24,13 +24,11 @@
 #include <cmocka.h>
 
 #include <stdlib.h>
-#include <string.h>
 
 /* Wrap realloc to simulate realloc failure conditions in tests */
 void * _wrap_realloc(void *ptr, size_t size);
-#define realloc(a,b) _wrap_realloc(a,b)
+#define VECPTR_FN_REALLOC _wrap_realloc
 #include "vecptr.h"
-#undef realloc
 
 #include "unused.h"
 

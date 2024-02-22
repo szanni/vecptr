@@ -17,6 +17,23 @@
 #ifndef VECPTR_H
 #define VECPTR_H
 
+#if !defined(VECPTR_FN_REALLOC) || !defined(VECPTR_FN_FREE)
+#include <stdlib.h>
+#endif
+
+#ifndef VECPTR_FN_REALLOC
+#define VECPTR_FN_REALLOC realloc
+#endif
+
+#ifndef VECPTR_FN_FREE
+#define VECPTR_FN_FREE free
+#endif
+
+#ifndef VECPTR_FN_MEMMOVE
+#include <string.h>
+#define VECPTR_FN_MEMMOVE memmove
+#endif
+
 #define VECPTR_GROWTH_FACTOR 1.5f
 #define VECPTR_DEFAULT_CAPACITY 5u
 
@@ -63,7 +80,7 @@ struct {			\
 
 #define VECPTR_SHRINK_TO_FIT(v) _vecptr_shrink_to_fit(_vecptr(v))
 
-#define VECPTR_FREE(v) free(VECPTR_DATA(v))
+#define VECPTR_FREE(v) VECPTR_FN_FREE(VECPTR_DATA(v))
 
 /**********************
  * Helper definitions *
@@ -82,7 +99,7 @@ _vecptr_resize(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t new_capa
 {
 	void *new_data;
 
-	new_data = realloc(*(v->data), new_capacity * sizeof_type);
+	new_data = VECPTR_FN_REALLOC(*(v->data), new_capacity * sizeof_type);
 	if (new_data == NULL)
 		return 1;
 
@@ -125,7 +142,7 @@ static void
 #endif
 _vecptr_memmove(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx, size_t srcidx)
 {
-	memmove((char*)(*(v->data)) + sizeof_type * destidx,
+	VECPTR_FN_MEMMOVE((char*)(*(v->data)) + sizeof_type * destidx,
 		(char*)(*(v->data)) + sizeof_type * srcidx,
 		(*(v->size) - srcidx) * sizeof_type);
 }

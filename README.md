@@ -7,10 +7,11 @@ within a single header file, written in standards compliant C (ANSI C/C99/C11).
 Usage
 =====
 
-vecptr deliberately does not include any parts of the C standard library but
-rather expects users to provide the functions `realloc()`, `memmove()`, and
-`free()`, as well as the type `size_t` themselves. For most applications just
-include  `<stdlib.h>` and `<string.h>` before including `<vecptr.h>`.
+Simply copy `vecptr.h` to your project and `#include` where needed.
+
+You may override the required C standard library functions `realloc`, `free`,
+and `memmove` by defining `VECPTR_FN_REALLOC`, `VECPTR_FN_FREE`, and
+`VECPTR_FN_MEMMOVE` before including `vecptr.h`.
 
 vecptr is primarily targeted at creation of dynamic arrays on the fly.
 
@@ -24,10 +25,8 @@ Example
 ### Idiomatic - Creating an Array
 ```
 #include <stdio.h>
+#include "vecptr.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <vecptr.h>
 int
 main(void)
 {
@@ -66,8 +65,9 @@ Dependencies
 Runtime
 -------
 
-* Definitions for the functions `realloc()`, `memmove()`, `free()` and type
-`size_t`.
+* C standard library, unless you override `VECPTR_FN_REALLOC`,
+  `VECPTR_FN_FREE`, and `VECPTR_FN_MEMMOVE` and provide a definition for
+  `size_t`.
 
 Test
 ----
