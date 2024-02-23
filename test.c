@@ -69,7 +69,8 @@ _wrap_realloc(void * ptr, size_t size)
 void
 test_INIT_EMPTY(void ** UNUSED(state))
 {
-	int *data;
+	/* Ensure VECPTR_INIT_EMPTY() is not affected by uninitialized structures */
+	int *data = (int*)0x5EEDC0DE;
 	size_t ndata;
 	VECPTR(int) v;
 	VECPTR_INIT_EMPTY(v, &data, &ndata);
@@ -78,6 +79,7 @@ test_INIT_EMPTY(void ** UNUSED(state))
 
 	assert_int_equal(VECPTR_SIZE(v), 0);
 	assert_int_equal(VECPTR_CAPACITY(v), VECPTR_DEFAULT_CAPACITY);
+	assert_ptr_equal(VECPTR_DATA(v), NULL);
 
 	assert_int_equal(VECPTR_APPEND(v, 10), 0);
 
@@ -90,7 +92,8 @@ test_INIT_EMPTY(void ** UNUSED(state))
 void
 test_INIT_EMPTY_CAPACITY(void ** UNUSED(state))
 {
-	int *data;
+	/* Ensure VECPTR_INIT_EMPTY_CAPACITY() is not affected by uninitialized structures */
+	int *data = (int*)0x5EEDC0DE;
 	size_t ndata;
 	VECPTR(int) v;
 	VECPTR_INIT_EMPTY_CAPACITY(v, &data, &ndata, 7);
@@ -99,6 +102,7 @@ test_INIT_EMPTY_CAPACITY(void ** UNUSED(state))
 
 	assert_int_equal(VECPTR_SIZE(v), 0);
 	assert_int_equal(VECPTR_CAPACITY(v), 7);
+	assert_ptr_equal(VECPTR_DATA(v), NULL);
 
 	assert_int_equal(VECPTR_APPEND(v, 10), 0);
 
