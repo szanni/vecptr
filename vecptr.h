@@ -41,7 +41,7 @@
 #define VECPTR_INIT_EMPTY_CAPACITY(v, d, s, c)									\
 	((v).size = (s), VECPTR_SIZE(v) = 0, VECPTR_CAPACITY(v) = (c), (v).data = (d), VECPTR_DATA(v) = NULL)
 
-#define VECPTR_INIT_DATA(v, d, s) ((v).size = (s), VECPTR_CAPACITY(v) = *(s), (v).data = (d))
+#define VECPTR_INIT_DATA(v, d, s) ((v).size = (s), VECPTR_CAPACITY(v) = VECPTR_SIZE(v), (v).data = (d))
 
 #define VECPTR(type)		\
 struct {			\
