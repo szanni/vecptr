@@ -34,6 +34,14 @@
 #define VECPTR_FN_MEMMOVE memmove
 #endif
 
+#ifndef _vecptr_restrict
+	#if __STDC_VERSION__ >= 199901L
+		#define _vecptr_restrict restrict
+	#else
+		#define _vecptr_restrict
+	#endif
+#endif
+
 #define VECPTR_GROWTH_FACTOR 1.5f
 #define VECPTR_DEFAULT_CAPACITY 5u
 
@@ -56,13 +64,13 @@ struct {			\
 
 #define VECPTR_NEW(v, d, s) VECPTR_NEW_CAPACITY((v), (d), (s), VECPTR_DEFAULT_CAPACITY)
 
-#define VECPTR_NEW_CAPACITY(v, d, s, c) (VECPTR_INIT_EMPTY((v), (d), (s)), _vecptr_new_capacity(_vecptr(v), (c)))
+#define VECPTR_NEW_CAPACITY(v, d, s, c) (VECPTR_INIT_EMPTY((v), (d), (s)), _vecptr_new_capacity(_vecptr_param(v), (c)))
 
-#define VECPTR_APPEND(v, e) ((!_vecptr_grow_if_needed(_vecptr(v))) ? (VECPTR_AT((v), VECPTR_SIZE(v)++) = e, 0) : 1)
+#define VECPTR_APPEND(v, e) ((!_vecptr_grow_if_needed(_vecptr_param(v))) ? (VECPTR_AT((v), VECPTR_SIZE(v)++) = e, 0) : 1)
 
-#define VECPTR_PREPEND(v, e) ((!_vecptr_prepend(_vecptr(v))) ? (VECPTR_AT((v), 0) = e, (VECPTR_SIZE(v))++, 0) : 1)
+#define VECPTR_PREPEND(v, e) ((!_vecptr_prepend(_vecptr_param(v))) ? (VECPTR_AT((v), 0) = e, (VECPTR_SIZE(v))++, 0) : 1)
 
-#define VECPTR_ERASE(v, i) _vecptr_erase(_vecptr(v), (i))
+#define VECPTR_ERASE(v, i) _vecptr_erase(_vecptr_param(v), (i))
 
 #define VECPTR_AT(v, i) (VECPTR_DATA(v)[i])
 
@@ -78,7 +86,7 @@ struct {			\
 
 #define VECPTR_CAPACITY(v) ((v).capacity)
 
-#define VECPTR_SHRINK_TO_FIT(v) _vecptr_shrink_to_fit(_vecptr(v))
+#define VECPTR_SHRINK_TO_FIT(v) _vecptr_shrink_to_fit(_vecptr_param(v))
 
 #define VECPTR_FREE(v) VECPTR_FN_FREE(VECPTR_DATA(v))
 
@@ -86,25 +94,23 @@ struct {			\
  * Helper definitions *
  **********************/
 
-VECPTR_TYPEDEF(void, _vecptr_void);
-
-#define _vecptr(v) (VECPTR_TYPE(_vecptr_void) *)&(v), sizeof(*VECPTR_DATA(v))
+#define _vecptr_param(v) &VECPTR_SIZE(v), &VECPTR_CAPACITY(v), (void**)&VECPTR_DATA(v), sizeof(*VECPTR_DATA(v))
 
 #if __STDC_VERSION__ >= 199901L
 static inline int
 #else
 static int
 #endif
-_vecptr_resize(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t new_capacity)
+_vecptr_resize(size_t *capacity, void **data, size_t sizeof_type, size_t new_capacity)
 {
 	void *new_data;
 
-	new_data = VECPTR_FN_REALLOC(*(v->data), new_capacity * sizeof_type);
+	new_data = VECPTR_FN_REALLOC(*data, new_capacity * sizeof_type);
 	if (new_data == NULL)
 		return 1;
 
-	*(v->data) = new_data;
-	v->capacity = new_capacity;
+	*data = new_data;
+	*capacity = new_capacity;
 	return 0;
 }
 
@@ -113,26 +119,26 @@ static inline int
 #else
 static int
 #endif
-_vecptr_grow_if_needed(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
+_vecptr_grow_if_needed(size_t * _vecptr_restrict size, size_t * _vecptr_restrict capacity, void **data, size_t sizeof_type)
 {
 	size_t new_capacity;
 
-	if (*(v->data) != NULL) {
-		if (*(v->size) < v->capacity)
+	if (*data != NULL) {
+		if (*size < *capacity)
 			return 0;
 
-		new_capacity = (size_t)(v->capacity * VECPTR_GROWTH_FACTOR);
+		new_capacity = (size_t)(*capacity * VECPTR_GROWTH_FACTOR);
 	}
 	else {
-		new_capacity = v->capacity;
+		new_capacity = *capacity;
 	}
 
 	/* Ensure to always grow the vecptr. Needed for capacity == 0
 	 * or capacity == 1 and a growth factor < 2. */
-	if (new_capacity <= *(v->size))
-		new_capacity = *(v->size) + VECPTR_DEFAULT_CAPACITY;
+	if (new_capacity <= *size)
+		new_capacity = *size + VECPTR_DEFAULT_CAPACITY;
 
-	return _vecptr_resize(v, sizeof_type, new_capacity);
+	return _vecptr_resize(capacity, data, sizeof_type, new_capacity);
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -140,11 +146,11 @@ static inline void
 #else
 static void
 #endif
-_vecptr_memmove(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx, size_t srcidx)
+_vecptr_memmove(size_t *size, void **data, size_t sizeof_type, size_t destidx, size_t srcidx)
 {
-	VECPTR_FN_MEMMOVE((char*)(*(v->data)) + sizeof_type * destidx,
-		(char*)(*(v->data)) + sizeof_type * srcidx,
-		(*(v->size) - srcidx) * sizeof_type);
+	VECPTR_FN_MEMMOVE((char*)(*data) + sizeof_type * destidx,
+		(char*)(*data) + sizeof_type * srcidx,
+		(*size - srcidx) * sizeof_type);
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -152,12 +158,13 @@ static inline void
 #else
 static void
 #endif
-_vecptr_erase(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t destidx)
+_vecptr_erase(size_t * _vecptr_restrict size, size_t * _vecptr_restrict capacity, void **data, size_t sizeof_type, size_t destidx)
 {
 	size_t srcidx = destidx + 1;
 
-	_vecptr_memmove(v, sizeof_type, destidx, srcidx);
-	--(*v->size);
+	_vecptr_memmove(size, data, sizeof_type, destidx, srcidx);
+	--(*size);
+	(void)capacity; /* silence unused */
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -165,12 +172,12 @@ static inline int
 #else
 static int
 #endif
-_vecptr_prepend(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
+_vecptr_prepend(size_t * _vecptr_restrict size, size_t * _vecptr_restrict capacity, void **data, size_t sizeof_type)
 {
-	if (_vecptr_grow_if_needed(v, sizeof_type))
+	if (_vecptr_grow_if_needed(size, capacity, data, sizeof_type))
 		return 1;
 
-	_vecptr_memmove(v, sizeof_type, 1, 0);
+	_vecptr_memmove(size, data, sizeof_type, 1, 0);
 	return 0;
 }
 
@@ -179,17 +186,12 @@ static inline int
 #else
 static int
 #endif
-_vecptr_new_capacity(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type, size_t capacity)
+_vecptr_new_capacity(size_t * _vecptr_restrict size, size_t * _vecptr_restrict capacity, void **data, size_t sizeof_type, size_t new_capacity)
 {
-	/*
-	*v->size = 0;
-	*/
-	v->capacity = capacity;
-	/*
-	*v->data = NULL;
-	*/
+	*capacity = new_capacity;
+	(void)size; /* silence unused */
 
-	return _vecptr_resize(v, sizeof_type, capacity);
+	return _vecptr_resize(capacity, data, sizeof_type, new_capacity);
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -197,15 +199,15 @@ static inline void
 #else
 static void
 #endif
-_vecptr_shrink_to_fit(VECPTR_TYPE(_vecptr_void) *v, size_t sizeof_type)
+_vecptr_shrink_to_fit(size_t * _vecptr_restrict size, size_t * _vecptr_restrict capacity, void **data, size_t sizeof_type)
 {
-	if (*(v->size) == 0 && v->capacity != 0) {
-		v->capacity = 0;
-		VECPTR_FREE(*v);
-		*(v->data) = NULL;
+	if (*size == 0) {
+		VECPTR_FN_FREE(*data);
+		*capacity = VECPTR_DEFAULT_CAPACITY;
+		*data = NULL;
 		return;
 	}
-	_vecptr_resize(v, sizeof_type, *(v->size));
+	_vecptr_resize(capacity, data, sizeof_type, *size);
 }
 
 #endif
